@@ -1,53 +1,57 @@
-#! /usr/bin/env python3
-
 import argparse
 from datetime import datetime
 import timew
-from fpdf import FPDF
+from fpdf import FPDF, XPos, YPos
 
 # PDF Report Generation Function
 def generate_timesheet(data):
     pdf = FPDF()
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
-    pdf.set_font('Arial', 'B', 16)
-    pdf.cell(200, 10, 'Monthly Timesheet Report', ln=True, align='C')
+    pdf.set_font('Helvetica', 'B', 16)
+    pdf.cell(200, 10, f"{datetime.strptime(data[0]['date'], '%Y-%m-%d').strftime('%B %Y')} Timesheet", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='C')
     pdf.ln(10)
 
     # Summary Table
-    pdf.set_font('Arial', 'B', 10)
+    pdf.set_font('Helvetica', 'B', 10)
     pdf.cell(40, 8, 'Date', 1)
     pdf.cell(120, 8, 'Comment', 1)
     pdf.cell(30, 8, 'Time (HH:MM)', 1)
     pdf.ln()
 
-    pdf.set_font('Arial', '', 10)
+    pdf.set_font('Helvetica', '', 10)
     total_duration = 0
     for entry in data:
-        # Calculate the height needed for the tags cell
-        tags_height = pdf.get_string_width(entry['tags']) // 100 * 8 + 8
-        cell_height = max(8.0, tags_height)
+        # Calculate the height needed for the row based on the length of the comment
+        tags_width = 120
+        line_height = 8
+        num_lines = max(1, int(pdf.get_string_width(entry['tags']) / tags_width) + 1)
+        cell_height = line_height * num_lines
+
+        # Set all cells in the row to the calculated height
         pdf.cell(40, cell_height, entry['date'], 1)
-        pdf.multi_cell(120, 8, entry['tags'], 1)
-        x, y = pdf.get_x(), pdf.get_y()
-        pdf.set_xy(x + 160, y - 8)  # Move cursor to the correct position after multi_cell
+        pdf.multi_cell(tags_width, line_height, entry['tags'], 1)
+        x_after = pdf.get_x()
+        y_after = pdf.get_y()
+        pdf.set_xy(x_after, y_after - cell_height)
+
         total_hours = entry['total_time'].seconds // 3600
         total_minutes = (entry['total_time'].seconds % 3600) // 60
         formatted_time = f"{total_hours:02}:{total_minutes:02}"
         pdf.cell(30, cell_height, formatted_time, 1, align='R')
         total_duration += entry['total_time'].total_seconds()
-        pdf.ln()
+        pdf.ln(cell_height)
 
     # Add a summary line for total time below the Total Time column
-    pdf.set_font('Arial', 'B', 10)
+    pdf.set_font('Helvetica', 'B', 10)
     total_hours = int(total_duration // 3600)
     total_minutes = int((total_duration % 3600) // 60)
-    formatted_total_time = f"{total_hours:3}:{total_minutes:02}"
+    formatted_total_time = f"{total_hours:02}:{total_minutes:02}"
     pdf.cell(160, 8, 'Total Time', 1, align='R')
     pdf.cell(30, 8, formatted_total_time, 1, align='R')
     pdf.ln()
 
-    filename = f"timesheet_{datetime.now().strftime('%Y%m%d')}.pdf"
+    filename = f"timesheet_{datetime.strptime(data[0]['date'], '%Y-%m-%d').strftime('%m_%Y')}.pdf"
     pdf.output(filename)
     print(f"Timesheet generated: {filename}")
 

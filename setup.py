@@ -10,7 +10,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'generate-timesheet=main:main',
+            'generate-timesheet=timewarrior_timesheet.main:main',
         ],
     },
     author='Martin Hans',
