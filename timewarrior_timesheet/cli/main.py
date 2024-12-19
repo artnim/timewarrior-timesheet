@@ -1,4 +1,5 @@
 from datetime import datetime
+from pathlib import Path
 from typing import Annotated, Optional
 
 import timew
@@ -15,7 +16,8 @@ app = typer.Typer(
 
 
 # PDF Report Generation Function
-def generate_timesheet(data):
+def generate_timesheet(data,
+                       output_path: Optional[Path] = Path.cwd()):
     pdf = FPDF()
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
@@ -69,7 +71,7 @@ def generate_timesheet(data):
     pdf.cell(30, 8, formatted_total_time, 1, align="R")
     pdf.ln()
 
-    filename = f"timesheet_{datetime.strptime(data[0]['date'], '%Y-%m-%d').strftime('%m_%Y')}.pdf"
+    filename = output_path / f"timesheet_{datetime.strptime(data[0]['date'], '%Y-%m-%d').strftime('%m_%Y')}.pdf"
     pdf.output(filename)
     print(f"Timesheet generated: {filename}")
 
@@ -130,6 +132,14 @@ def main(
     end: Annotated[
         str, typer.Argument(..., help="The end date for the timesheet (YYYY-MM-DD).")
     ],
+    output_path: Annotated[
+        Path,
+        typer.Option(
+            "--output-path",
+            "-o",
+            help="The output path for the generated PDF file.",
+        ),
+    ] = Path.cwd(),
     version: Annotated[
         Optional[bool],
         typer.Option(
@@ -141,7 +151,7 @@ def main(
     ] = None,
 ):
     data = get_timew_data(project, start, end)
-    generate_timesheet(data)
+    generate_timesheet(data, output_path)
 
 
 if __name__ == "__main__":
