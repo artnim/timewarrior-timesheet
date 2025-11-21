@@ -79,7 +79,7 @@ def generate_timesheet(data,
 # Example Timewarrior Data Extraction Script (Modify as needed)
 def get_timew_data(project_name, start_date, end_date):
     # Start timewarrior client (edit the path to your installation)
-    tw = timew.TimeWarrior("/usr/local/bin/timew")
+    tw = timew.TimeWarrior()
 
     # Collect data from Timewarrior using filters
     reports = tw.summary(f"{start_date}", f"{end_date}")
